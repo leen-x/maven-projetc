@@ -3,7 +3,7 @@ package com.leenx.learn.mavenproject;
 import java.util.Scanner;
 
 /**
- * @author linsongxiong
+ * @author leen-x
  * @Description: 测试终端输入的命令
  * @date 2021/07/14 3:19 下午
  **/
