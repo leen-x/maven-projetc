@@ -1,4 +1,4 @@
-package com.leenx.learn.mavenproject;
+package com.leenx.learn.mavenproject.util;
 
 /**
  * @author leen-x

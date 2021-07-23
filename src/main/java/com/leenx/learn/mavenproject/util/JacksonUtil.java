@@ -1,6 +1,8 @@
-package com.leenx.learn.mavenproject;
+package com.leenx.learn.mavenproject.util;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -25,6 +27,8 @@ public class JacksonUtil {
         mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         // 设置输出时包含属性的风格 包含为null的属性
         mapper.setSerializationInclusion(JsonInclude.Include.ALWAYS);
+        //
+        mapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
     }
 
     /**
@@ -99,7 +103,7 @@ public class JacksonUtil {
     /**
      * json转对象
      *
-     * @param json          json字符串
+     * @param json  json字符串
      * @param typeReference
      * @return 对象
      */
