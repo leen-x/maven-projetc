@@ -21,9 +21,5 @@ public class App {
     }
 
     public static void main(String[] args) throws InterruptedException {
-        Demo demo = new Demo();
-        demo.name = "lsx";
-        demo.addr = "China";
-        System.out.println(JacksonUtil.toJSONString(demo));
     }
 }
