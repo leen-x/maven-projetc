@@ -1,19 +1,27 @@
 package com.leenx.learn.mavenproject.util;
 
+import kotlin.Pair;
+import okhttp3.Headers;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
  * @author leen-x
- * @Description:
+ * @Description: OkHttp3 工具类
  * @date 2021/07/22 5:26 下午
  **/
 public class OkHttpClientUtil {
@@ -21,10 +29,10 @@ public class OkHttpClientUtil {
     private static final MediaType MEDIA_TYPE_JSON = MediaType.parse("application/json; charset=utf-8");
 
 
-    private static OkHttpClient client;
+    private static final OkHttpClient okHttpClient;
 
     static {
-        client = new OkHttpClient.Builder()
+        okHttpClient = new OkHttpClient.Builder()
                 // 建立连接超时时间5S
                 .connectTimeout(5000, TimeUnit.MILLISECONDS)
                 // 读取数据超时时间10S
@@ -33,33 +41,48 @@ public class OkHttpClientUtil {
     }
 
     /**
-     * GET
+     * GET request for String response body
      *
-     * @param url
-     * @param tClass
+     * @param url 完整的URL
+     * @return
+     */
+    public static HttpResponseModel<String> get(String url) {
+        Request.Builder requestBuilder = new Request.Builder();
+        // url
+        requestBuilder.url(url);
+        // execute
+        requestBuilder.get();
+        return toString(execute(requestBuilder.build()));
+    }
+
+    /**
+     * GET request for JSON response body
+     *
+     * @param url    完整的URL
+     * @param tClass 反序列化的类
      * @param <T>
      * @return
      */
-    public static <T> T get(String url, Class<T> tClass) {
+    public static <T> HttpResponseModel<T> get(String url, Class<T> tClass) {
         return get(url, null, tClass);
     }
 
     /**
-     * GET
+     * GET request for JSON response body
      *
-     * @param url
-     * @param header
-     * @param tClass
+     * @param url    完整的URL
+     * @param header 请求头
+     * @param tClass JSON反序列化的类
      * @param <T>
      * @return
      */
-    public static <T> T get(String url, Map<String, String> header, Class<T> tClass) {
+    public static <T> HttpResponseModel<T> get(String url, @Nullable Map<String, String> header, Class<T> tClass) {
         Request.Builder requestBuilder = new Request.Builder();
         // url
         requestBuilder.url(url);
         // header
         buildHeader(requestBuilder, header);
-        //
+        // execute
         requestBuilder.get();
         Response response = execute(requestBuilder.build());
         return toBean(response, tClass);
@@ -68,26 +91,27 @@ public class OkHttpClientUtil {
     /**
      * POST
      *
-     * @param url
-     * @param body
-     * @param tClass
+     * @param url    完整的URL
+     * @param body   JSON序列化的bean
+     * @param tClass JSON响应体反序列化为bean的类
      * @param <T>
      * @return
      */
-    public static <T> T post(String url, Object body, Class<T> tClass) {
+    public static <T> HttpResponseModel<T> post(String url, @Nullable Object body, Class<T> tClass) {
         return post(url, body, null, tClass);
     }
 
     /**
      * POST
      *
-     * @param url
-     * @param body
-     * @param tClass
+     * @param url     完整的URL
+     * @param body    JSON序列化的bean
+     * @param headers 请求头
+     * @param tClass  JSON响应体反序列化为bean的类
      * @param <T>
      * @return
      */
-    public static <T> T post(String url, Object body, Map<String, String> headers, Class<T> tClass) {
+    public static <T> HttpResponseModel<T> post(String url, @Nullable Object body, @Nullable Map<String, String> headers, Class<T> tClass) {
         Request.Builder requestBuilder = new Request.Builder();
         // url
         requestBuilder.url(url);
@@ -101,13 +125,15 @@ public class OkHttpClientUtil {
     }
 
     /**
-     * POST
+     * 通用request 自行指定HTTP方法
      *
-     * @param url
-     * @param body
+     * @param method  HTTP方法
+     * @param url     完整的URL
+     * @param body    JSON序列化的bean
+     * @param headers 请求头
      * @return
      */
-    public static InputStream request(String method, String url, Object body, Map<String, String> headers) {
+    public static HttpResponseModel<InputStream> request(String method, String url, @Nullable Object body, @Nullable Map<String, String> headers) {
         Request.Builder requestBuilder = new Request.Builder();
         // url
         requestBuilder.url(url);
@@ -125,13 +151,15 @@ public class OkHttpClientUtil {
     }
 
     /**
-     * POST
+     * request for byte[] response body
      *
-     * @param url
-     * @param body
+     * @param method  HTTP方法
+     * @param url     完整的URL
+     * @param body    JSON序列化的bean
+     * @param headers 请求头
      * @return
      */
-    public static String requestForString(String method, String url, Object body, Map<String, String> headers) {
+    public static HttpResponseModel<String> requestForString(String method, String url, @Nullable Object body, @Nullable Map<String, String> headers) {
         Request.Builder requestBuilder = new Request.Builder();
         // url
         requestBuilder.url(url);
@@ -149,13 +177,15 @@ public class OkHttpClientUtil {
     }
 
     /**
-     * POST
+     * request for byte[] response body
      *
-     * @param url
-     * @param body
+     * @param method  HTTP方法
+     * @param url     完整的URL
+     * @param body    JSON序列化的bean
+     * @param headers 请求头
      * @return
      */
-    public static byte[] requestForBytes(String method, String url, Object body, Map<String, String> headers) {
+    public static HttpResponseModel<byte[]> requestForBytes(String method, String url, @Nullable Object body, @Nullable Map<String, String> headers) {
         Request.Builder requestBuilder = new Request.Builder();
         // url
         requestBuilder.url(url);
@@ -170,6 +200,32 @@ public class OkHttpClientUtil {
         // 执行请求
         Response response = execute(requestBuilder.build());
         return toBytes(response);
+    }
+
+    /**
+     * request for InputStream response body
+     *
+     * @param method  HTTP方法
+     * @param url     完整的URL
+     * @param body    JSON序列化的bean
+     * @param headers 请求头
+     * @return
+     */
+    public static HttpResponseModel<InputStream> requestForInputStream(String method, String url, @Nullable Object body, @Nullable Map<String, String> headers) {
+        Request.Builder requestBuilder = new Request.Builder();
+        // url
+        requestBuilder.url(url);
+        // header
+        buildHeader(requestBuilder, headers);
+        // body
+        if (method == null || "".equals(method) || Constant.HTTP_GET.equals(method)) {
+            requestBuilder.get();
+        } else {
+            requestBuilder.method(method, buildJsonBody(body));
+        }
+        // 执行请求
+        Response response = execute(requestBuilder.build());
+        return toInputStream(response);
     }
 
     /**
@@ -208,10 +264,49 @@ public class OkHttpClientUtil {
      */
     private static Response execute(Request request) {
         try {
-            return client.newCall(request).execute();
+            return okHttpClient.newCall(request).execute();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * 将QueryParam Map转化为key=xxx&key=xxx
+     *
+     * @param paramsMap
+     * @return 如 key=xxx&key=xxx 这样的字符串
+     */
+    public static String convertQueryParamsMap2String(Map<String, ?> paramsMap) {
+        StringBuilder sb = new StringBuilder();
+        for (Map.Entry<String, ?> param : paramsMap.entrySet()) {
+            if (param.getValue() instanceof String) {
+                // 处理字符串 key=value
+                sb.append(param.getKey()).append("=").append(param.getValue()).append("&");
+            } else if (param.getValue() instanceof List || param.getValue() instanceof Set) {
+                // 处理集合 key1=value1&key1=value2&key1=value3
+                for (Object obj : (Collection<?>) param.getValue()) {
+                    sb.append(param.getKey()).append("=").append(obj).append("&");
+                }
+            } else {
+                // 其他类型处理
+                sb.append(param.getKey()).append("=").append(param.getValue()).append("&");
+            }
+        }
+        if (sb.length() > 0 && '&' == (sb.charAt(sb.length() - 1))) {
+            sb.deleteCharAt(sb.length() - 1);
+        }
+        return sb.toString();
+    }
+
+    private static Map<String, String> convertHeaders2Map(Headers headers) {
+        Map<String, String> headerMap = new HashMap<>();
+        if (headers != null) {
+            for (Iterator<Pair<String, String>> it = headers.iterator(); it.hasNext(); ) {
+                Pair<String, String> header = it.next();
+                headerMap.put(header.component1(), header.component2());
+            }
+        }
+        return headerMap;
     }
 
     /**
@@ -220,18 +315,20 @@ public class OkHttpClientUtil {
      * @param response
      * @return
      */
-    private static String toString(Response response) {
+    private static HttpResponseModel<String> toString(Response response) {
         String body = null;
         try {
             if (response.body() != null) {
                 body = response.body().string();
-                return body;
-            } else {
-                return null;
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        return HttpResponseModel.<String>builder()
+                .status(response.code())
+                .headers(convertHeaders2Map(response.headers()))
+                .body(body)
+                .build();
     }
 
     /**
@@ -240,55 +337,75 @@ public class OkHttpClientUtil {
      * @param response
      * @return
      */
-    private static byte[] toBytes(Response response) {
+    private static HttpResponseModel<byte[]> toBytes(Response response) {
         byte[] body = null;
         try {
             if (response.body() != null) {
                 body = response.body().bytes();
-                return body;
             } else {
                 return null;
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        return HttpResponseModel.<byte[]>builder()
+                .status(response.code())
+                .headers(convertHeaders2Map(response.headers()))
+                .body(body)
+                .build();
     }
 
     /**
-     * response body bean
+     * response body to bean
      *
      * @param response
      * @param tClass
      * @param <T>
      * @return
      */
-    private static <T> T toBean(Response response, Class<T> tClass) {
+    private static <T> HttpResponseModel<T> toBean(Response response, Class<T> tClass) {
         String body = null;
+        T bean = null;
         try {
             if (response.body() != null && tClass != null) {
                 body = response.body().string();
-                return JacksonUtil.parseObject(body, tClass);
+                bean = JacksonUtil.parseObject(body, tClass);
             } else {
                 return null;
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        return HttpResponseModel.<T>builder()
+                .status(response.code())
+                .headers(convertHeaders2Map(response.headers()))
+                .body(bean)
+                .build();
     }
 
     /**
-     * response body InputStream
+     * response body to InputStream
      *
      * @param response
      * @return
      */
-    private static InputStream toInputStream(Response response) {
-        return response.body() != null ? response.body().byteStream() : null;
+    private static HttpResponseModel<InputStream> toInputStream(Response response) {
+        InputStream body = null;
+        if (response.body() != null) {
+            body = response.body().byteStream();
+        } else {
+            return null;
+        }
+        return HttpResponseModel.<InputStream>builder()
+                .status(response.code())
+                .headers(convertHeaders2Map(response.headers()))
+                .body(body)
+                .build();
     }
 
     public static void main(String[] args) {
         String url = "http://www.kuaidi100.com/query?type=%E5%BF%AB%E9%80%92%E5%85%AC%E5%8F%B8%E4%BB%A3%E5%8F%B7&postid=%E5%BF%AB%E9%80%92%E5%8D%95%E5%8F%B7";
-        String resp = OkHttpClientUtil.requestForString(Constant.HTTP_GET, url, null, null);
-        System.out.println(resp);
+        HttpResponseModel<String> resp = OkHttpClientUtil.requestForString(Constant.HTTP_GET, url, null, null);
+        System.out.println(resp.getBody());
     }
 }
