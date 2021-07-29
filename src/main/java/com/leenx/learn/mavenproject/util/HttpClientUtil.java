@@ -69,7 +69,7 @@ public class HttpClientUtil {
         // handle headers
         httpPost.setHeaders(convertMap2Headers(headers));
         // handle body
-        String reqBodyStr = JacksonUtil.toJSONString(body);
+        String reqBodyStr = body instanceof String ? (String) body : JacksonUtil.toJSONString(body);
         StringEntity stringEntity = new StringEntity(reqBodyStr, StandardCharsets.UTF_8);
         // execute
         return toString(execute(httpPost));
@@ -90,7 +90,7 @@ public class HttpClientUtil {
         // handle headers
         httpPost.setHeaders(convertMap2Headers(headers));
         // handle body
-        String reqBodyStr = JacksonUtil.toJSONString(body);
+        String reqBodyStr = body instanceof String ? (String) body : JacksonUtil.toJSONString(body);
         StringEntity stringEntity = new StringEntity(reqBodyStr, StandardCharsets.UTF_8);
         // execute
         CloseableHttpResponse httpResponse = execute(httpPost);
@@ -111,7 +111,7 @@ public class HttpClientUtil {
         // handle headers
         httpPost.setHeaders(convertMap2Headers(headers));
         // handle body
-        String reqBodyStr = JacksonUtil.toJSONString(body);
+        String reqBodyStr = body instanceof String ? (String) body : JacksonUtil.toJSONString(body);
         StringEntity stringEntity = new StringEntity(reqBodyStr, StandardCharsets.UTF_8);
         // execute
         CloseableHttpResponse httpResponse = execute(httpPost);
@@ -132,7 +132,7 @@ public class HttpClientUtil {
         // handle headers
         httpPost.setHeaders(convertMap2Headers(headers));
         // handle body
-        String reqBodyStr = JacksonUtil.toJSONString(body);
+        String reqBodyStr = body instanceof String ? (String) body : JacksonUtil.toJSONString(body);
         StringEntity stringEntity = new StringEntity(reqBodyStr, StandardCharsets.UTF_8);
         // execute
         CloseableHttpResponse httpResponse = execute(httpPost);
@@ -153,7 +153,7 @@ public class HttpClientUtil {
         // handle headers
         httpPost.setHeaders(convertMap2Headers(headers));
         // handle body
-        String reqBodyStr = JacksonUtil.toJSONString(body);
+        String reqBodyStr = body instanceof String ? (String) body : JacksonUtil.toJSONString(body);
         StringEntity stringEntity = new StringEntity(reqBodyStr, StandardCharsets.UTF_8);
         // execute
         return toInputStream(execute(httpPost));
@@ -324,6 +324,6 @@ public class HttpClientUtil {
     }
 
     public static void main(String[] args) {
-        String url = "http://www.kuaidi100.com/query?type=%E5%BF%AB%E9%80%92%E5%85%AC%E5%8F%B8%E4%BB%A3%E5%8F%B7&postid=%E5%BF%AB%E9%80%92%E5%8D%95%E5%8F%B7";
+        System.out.println("" instanceof String);
     }
 }

@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 public class OkHttpClientUtil {
 
     private static final MediaType MEDIA_TYPE_JSON = MediaType.parse("application/json; charset=utf-8");
+    private static final MediaType MEDIA_TYPE_TXT = MediaType.parse("text/plain; charset=utf-8");
 
 
     private static final OkHttpClient okHttpClient;
@@ -251,9 +252,16 @@ public class OkHttpClientUtil {
         // body OKHttp3 POST、PUT等不能空，所以取""空字符串，""空字符串符合JSON规定，为null
         String bodyJson = "";
         if (body != null) {
-            bodyJson = JacksonUtil.toJSONString(body);
+            if (body instanceof String) {
+                bodyJson = (String) body;
+                return RequestBody.create(bodyJson, MEDIA_TYPE_TXT);
+            } else {
+                bodyJson = JacksonUtil.toJSONString(body);
+                return RequestBody.create(bodyJson, MEDIA_TYPE_JSON);
+            }
         }
-        return RequestBody.create(bodyJson, MEDIA_TYPE_JSON);
+        return RequestBody.create(bodyJson, MEDIA_TYPE_TXT);
+
     }
 
     /**
