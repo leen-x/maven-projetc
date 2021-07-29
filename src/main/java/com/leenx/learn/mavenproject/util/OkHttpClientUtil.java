@@ -18,14 +18,6 @@ import java.util.concurrent.TimeUnit;
  **/
 public class OkHttpClientUtil {
 
-    public static final String GET = "GET";
-
-    public static final String POST = "POST";
-
-    public static final String DELETE = "DELETE";
-
-    public static final String PUT = "PUT";
-
     private static final MediaType MEDIA_TYPE_JSON = MediaType.parse("application/json; charset=utf-8");
 
 
@@ -122,7 +114,7 @@ public class OkHttpClientUtil {
         // header
         buildHeader(requestBuilder, headers);
         // body
-        if (method == null || "".equals(method) || GET.equals(method)) {
+        if (method == null || "".equals(method) || Constant.HTTP_GET.equals(method)) {
             requestBuilder.get();
         } else {
             requestBuilder.method(method, buildJsonBody(body));
@@ -146,7 +138,7 @@ public class OkHttpClientUtil {
         // header
         buildHeader(requestBuilder, headers);
         // body
-        if (method == null || "".equals(method) || GET.equals(method)) {
+        if (method == null || "".equals(method) || Constant.HTTP_GET.equals(method)) {
             requestBuilder.get();
         } else {
             requestBuilder.method(method, buildJsonBody(body));
@@ -170,7 +162,7 @@ public class OkHttpClientUtil {
         // header
         buildHeader(requestBuilder, headers);
         // body
-        if (method == null || "".equals(method) || GET.equals(method)) {
+        if (method == null || "".equals(method) || Constant.HTTP_GET.equals(method)) {
             requestBuilder.get();
         } else {
             requestBuilder.method(method, buildJsonBody(body));
@@ -296,7 +288,7 @@ public class OkHttpClientUtil {
 
     public static void main(String[] args) {
         String url = "http://www.kuaidi100.com/query?type=%E5%BF%AB%E9%80%92%E5%85%AC%E5%8F%B8%E4%BB%A3%E5%8F%B7&postid=%E5%BF%AB%E9%80%92%E5%8D%95%E5%8F%B7";
-        String resp = OkHttpClientUtil.get(url, String.class);
+        String resp = OkHttpClientUtil.requestForString(Constant.HTTP_GET, url, null, null);
         System.out.println(resp);
     }
 }
