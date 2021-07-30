@@ -9,8 +9,11 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 import javax.annotation.Nullable;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -72,17 +75,17 @@ public class OkHttpClientUtil {
      * GET request for JSON response body
      *
      * @param url    完整的URL
-     * @param header 请求头
+     * @param headers 请求头
      * @param tClass JSON反序列化的类
      * @param <T>
      * @return
      */
-    public static <T> HttpResponseModel<T> get(String url, @Nullable Map<String, String> header, Class<T> tClass) {
+    public static <T> HttpResponseModel<T> get(String url, @Nullable Map<String, String> headers, Class<T> tClass) {
         Request.Builder requestBuilder = new Request.Builder();
         // url
         requestBuilder.url(url);
         // header
-        buildHeader(requestBuilder, header);
+        buildHeader(requestBuilder, headers);
         // execute
         requestBuilder.get();
         Response response = execute(requestBuilder.build());
@@ -99,7 +102,7 @@ public class OkHttpClientUtil {
      * @return
      */
     public static <T> HttpResponseModel<T> post(String url, @Nullable Object body, Class<T> tClass) {
-        return post(url, body, null, tClass);
+        return post(url, null, body, tClass);
     }
 
     /**
@@ -112,7 +115,7 @@ public class OkHttpClientUtil {
      * @param <T>
      * @return
      */
-    public static <T> HttpResponseModel<T> post(String url, @Nullable Object body, @Nullable Map<String, String> headers, Class<T> tClass) {
+    public static <T> HttpResponseModel<T> post(String url, @Nullable Map<String, String> headers, @Nullable Object body, Class<T> tClass) {
         Request.Builder requestBuilder = new Request.Builder();
         // url
         requestBuilder.url(url);
@@ -134,21 +137,9 @@ public class OkHttpClientUtil {
      * @param headers 请求头
      * @return
      */
-    public static HttpResponseModel<InputStream> request(String method, String url, @Nullable Object body, @Nullable Map<String, String> headers) {
-        Request.Builder requestBuilder = new Request.Builder();
-        // url
-        requestBuilder.url(url);
-        // header
-        buildHeader(requestBuilder, headers);
-        // body
-        if (method == null || "".equals(method) || Constant.HTTP_GET.equals(method)) {
-            requestBuilder.get();
-        } else {
-            requestBuilder.method(method, buildJsonBody(body));
-        }
-        // 执行请求
-        Response response = execute(requestBuilder.build());
-        return toInputStream(response);
+    public static <T> HttpResponseModel<T> request(String method, String url, @Nullable Map<String, String> headers, @Nullable Object body, Class<T> tClass) {
+        Request request = buildRequest(method, url, headers, body);
+        return toBean(execute(request), tClass);
     }
 
     /**
@@ -160,21 +151,9 @@ public class OkHttpClientUtil {
      * @param headers 请求头
      * @return
      */
-    public static HttpResponseModel<String> requestForString(String method, String url, @Nullable Object body, @Nullable Map<String, String> headers) {
-        Request.Builder requestBuilder = new Request.Builder();
-        // url
-        requestBuilder.url(url);
-        // header
-        buildHeader(requestBuilder, headers);
-        // body
-        if (method == null || "".equals(method) || Constant.HTTP_GET.equals(method)) {
-            requestBuilder.get();
-        } else {
-            requestBuilder.method(method, buildJsonBody(body));
-        }
-        // 执行请求
-        Response response = execute(requestBuilder.build());
-        return toString(response);
+    public static HttpResponseModel<String> requestForString(String method, String url, @Nullable Map<String, String> headers, @Nullable Object body) {
+        Request request = buildRequest(method, url, headers, body);
+        return toString(execute(request));
     }
 
     /**
@@ -186,21 +165,9 @@ public class OkHttpClientUtil {
      * @param headers 请求头
      * @return
      */
-    public static HttpResponseModel<byte[]> requestForBytes(String method, String url, @Nullable Object body, @Nullable Map<String, String> headers) {
-        Request.Builder requestBuilder = new Request.Builder();
-        // url
-        requestBuilder.url(url);
-        // header
-        buildHeader(requestBuilder, headers);
-        // body
-        if (method == null || "".equals(method) || Constant.HTTP_GET.equals(method)) {
-            requestBuilder.get();
-        } else {
-            requestBuilder.method(method, buildJsonBody(body));
-        }
-        // 执行请求
-        Response response = execute(requestBuilder.build());
-        return toBytes(response);
+    public static HttpResponseModel<byte[]> requestForBytes(String method, String url, @Nullable Map<String, String> headers, @Nullable Object body) {
+        Request request = buildRequest(method, url, headers, body);
+        return toBytes(execute(request));
     }
 
     /**
@@ -212,21 +179,9 @@ public class OkHttpClientUtil {
      * @param headers 请求头
      * @return
      */
-    public static HttpResponseModel<InputStream> requestForInputStream(String method, String url, @Nullable Object body, @Nullable Map<String, String> headers) {
-        Request.Builder requestBuilder = new Request.Builder();
-        // url
-        requestBuilder.url(url);
-        // header
-        buildHeader(requestBuilder, headers);
-        // body
-        if (method == null || "".equals(method) || Constant.HTTP_GET.equals(method)) {
-            requestBuilder.get();
-        } else {
-            requestBuilder.method(method, buildJsonBody(body));
-        }
-        // 执行请求
-        Response response = execute(requestBuilder.build());
-        return toInputStream(response);
+    public static HttpResponseModel<InputStream> requestForInputStream(String method, String url, @Nullable Map<String, String> headers, @Nullable Object body) {
+        Request request = buildRequest(method, url, headers, body);
+        return toInputStream(execute(request));
     }
 
     /**
@@ -241,6 +196,30 @@ public class OkHttpClientUtil {
                 builder.addHeader(entry.getKey(), entry.getValue());
             }
         }
+    }
+
+    /**
+     * 构造请求
+     *
+     * @param method
+     * @param url
+     * @param headers
+     * @param body
+     * @return
+     */
+    private static Request buildRequest(String method, String url, @Nullable Map<String, String> headers, @Nullable Object body) {
+        Request.Builder requestBuilder = new Request.Builder();
+        // url
+        requestBuilder.url(url);
+        // header
+        buildHeader(requestBuilder, headers);
+        // body
+        if (method == null || "".equals(method) || Constant.HTTP_GET.equals(method)) {
+            requestBuilder.get();
+        } else {
+            requestBuilder.method(method, buildJsonBody(body));
+        }
+        return requestBuilder.build();
     }
 
     /**
@@ -412,8 +391,30 @@ public class OkHttpClientUtil {
     }
 
     public static void main(String[] args) {
-        String url = "http://www.kuaidi100.com/query?type=%E5%BF%AB%E9%80%92%E5%85%AC%E5%8F%B8%E4%BB%A3%E5%8F%B7&postid=%E5%BF%AB%E9%80%92%E5%8D%95%E5%8F%B7";
-        HttpResponseModel<String> resp = OkHttpClientUtil.requestForString(Constant.HTTP_GET, url, null, null);
-        System.out.println(resp.getBody());
+        // 下载byte流demo
+        String picUrl = "https://ss2.baidu.com/-vo3dSag_xI4khGko9WTAnF6hhy/baike/s=220/sign=8464c514b50e7bec27da04e31f2fb9fa/810a19d8bc3eb1358e9f66a0ab1ea8d3fd1f4455.jpg";
+        HttpResponseModel<InputStream> responseModel = OkHttpClientUtil.requestForInputStream(Constant.HTTP_GET, picUrl, null, null);
+        InputStream is = responseModel.getBody();
+        OutputStream out = null;
+        try {
+            out = new FileOutputStream("/Users/leen/Desktop/pic");
+            byte[] buff = new byte[1024];
+            int len = 0;
+            while ((len = is.read(buff)) != -1) {
+                out.write(buff, 0, len);
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                is.close();
+                out.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        }
     }
 }
