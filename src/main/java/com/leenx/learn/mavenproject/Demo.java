@@ -1,5 +1,7 @@
 package com.leenx.learn.mavenproject;
 
+import java.math.BigDecimal;
+
 /**
  * @author leen-x
  * @Description:
@@ -12,4 +14,6 @@ public class Demo {
     public String addr;
 
     private Integer age;
+
+    public BigDecimal price;
 }
