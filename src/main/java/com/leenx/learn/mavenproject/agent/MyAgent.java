@@ -9,6 +9,6 @@ import java.lang.instrument.Instrumentation;
  **/
 public class MyAgent {
     public static void premain(String args, Instrumentation instrumentation) throws Exception {
-        System.out.println("Hello javaagent permain:"+args);
+        System.out.println("Hello javaagent permain:" + args);
     }
 }
